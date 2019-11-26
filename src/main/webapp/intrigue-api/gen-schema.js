@@ -77,7 +77,6 @@ const genSchema = () => {
   input MetacardAttributesInput {
   ${attrs(true)}
   }
-
   ${getTypeDefs()}
   `
 }

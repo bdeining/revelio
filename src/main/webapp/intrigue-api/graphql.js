@@ -7,6 +7,16 @@ import { mergeDeepOverwriteLists } from '../utils'
 const { BatchHttpLink } = require('apollo-link-batch-http')
 const { genSchema, toGraphqlName, fromGraphqlName } = require('./gen-schema')
 
+import metacardsModule from './metacards'
+
+import attributes from './attributes.json'
+
+const {
+  resolver: metacards,
+  context: metacardsContext,
+  typeDefs: metacardTypeDefs,
+} = metacardsModule(attributes)
+
 const ROOT = '/search/catalog/internal'
 
 const filterDeepHelper = filterFunction => object =>
@@ -57,20 +67,6 @@ const systemProperties = async (parent, args, { fetch }) => {
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0
 
-const { write } = require('./cql')
-
-const getCql = ({ filterTree, cql }) => {
-  if (filterTree !== undefined) {
-    return '(' + write(filterTree) + ')'
-  }
-  return cql
-}
-
-const processQuery = ({ filterTree, cql, ...query }) => {
-  const cqlString = getCql({ filterTree, cql })
-  return { cql: cqlString, ...query }
-}
-
 const renameKeys = (f, map) => {
   return Object.keys(map).reduce((attrs, attr) => {
     const name = f(attr)
@@ -93,61 +89,6 @@ const fromGraphqlMap = map => {
     attrs[name] = map[attr]
     return attrs
   }, {})
-}
-
-const queries = (ids = []) => async (args, context) => {
-  if (ids.length === 0) {
-    return []
-  }
-
-  const filters = ids.map(id => {
-    return {
-      type: '=',
-      property: 'id',
-      value: id,
-    }
-  })
-
-  const filterTree = {
-    type: 'AND',
-    filters: [
-      {
-        type: 'OR',
-        filters,
-      },
-      {
-        type: 'LIKE',
-        property: 'metacard-tags',
-        value: '%',
-      },
-    ],
-  }
-
-  const res = await metacards({}, { filterTree }, context)
-
-  return res.attributes.map(attrs => {
-    const { filterTree } = attrs
-
-    return {
-      ...attrs,
-      filterTree: () => JSON.parse(filterTree),
-    }
-  })
-}
-
-const metacards = async (parent, args, { catalog }) => {
-  const q = { ...args.settings, filterTree: args.filterTree }
-  const json = await catalog.query(processQuery(q))
-
-  const attributes = json.results.map(result => {
-    const properties = toGraphqlMap(result.metacard.properties)
-    return {
-      ...properties,
-      queries: queries(properties.queries),
-    }
-  })
-  json.status['elapsed'] = json.request_duration_millis
-  return { attributes, ...json }
 }
 
 const queryTemplates = {
@@ -504,6 +445,10 @@ const btoa = arg => {
   }
   return Buffer.from(arg).toString('base64')
 }
+export const context = {
+  ...metacardsContext,
+}
+
 const createClient = (options = defaultOptions) => {
   const cache = new InMemoryCache()
   const { ssrMode } = options
@@ -513,7 +458,7 @@ const createClient = (options = defaultOptions) => {
   }
   return new ApolloClient({
     link: ssrMode
-      ? new SchemaLink({ schema: executableSchema })
+      ? new SchemaLink({ schema: executableSchema, context })
       : new BatchHttpLink({
           uri: serverLocation,
           credentials: 'same-origin',
@@ -527,6 +472,7 @@ const createClient = (options = defaultOptions) => {
 }
 
 module.exports = {
+  context,
   createClient,
   resolvers,
 }

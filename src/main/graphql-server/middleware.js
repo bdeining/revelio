@@ -5,11 +5,14 @@ const typeDefs = genSchema()
 const renderer = require('./helpers/renderer')
 import createRpcClient from '../webapp/intrigue-api/rpc'
 const fetch = require('../webapp/intrigue-api/fetch')
-const { resolvers } = require('../webapp/intrigue-api/graphql')
+const { context, resolvers } = require('../webapp/intrigue-api/graphql')
+
+console.log(context)
 
 const app = express.Router()
 const server = new ApolloServer({
   typeDefs,
+  context,
   resolvers,
   context: ({ req }) => {
     const { authorization = '' } = req.headers
