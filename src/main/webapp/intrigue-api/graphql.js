@@ -9,7 +9,7 @@ const { genSchema, toGraphqlName, fromGraphqlName } = require('./gen-schema')
 import { Set } from 'immutable'
 import { validate } from 'graphql/validation'
 
-import metacardsModule from './metacards'
+import metacardsModule from './metacards/metacards'
 
 import attributes from './attributes.json'
 
