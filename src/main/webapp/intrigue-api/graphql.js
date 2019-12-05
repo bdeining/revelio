@@ -6,6 +6,8 @@ import { fromJS, getIn, removeIn, set, setIn } from 'immutable'
 import { mergeDeepOverwriteLists } from '../utils'
 const { BatchHttpLink } = require('apollo-link-batch-http')
 const { genSchema, toGraphqlName, fromGraphqlName } = require('./gen-schema')
+import { Set } from 'immutable'
+import { validate } from 'graphql/validation'
 
 import metacardsModule from './metacards'
 
@@ -318,14 +320,15 @@ const facet = async (parent, args, { catalog }) => {
 }
 
 const Query = {
-  user,
-  sources,
+  //user,
+  //sources,
   metacards,
+  /*
   metacardsByTag,
   metacardById,
   metacardTypes,
   systemProperties,
-  facet,
+  facet,*/
 }
 
 const createMetacard = async (parent, args, { catalog }) => {
@@ -424,11 +427,15 @@ const Mutation = {
 
 const resolvers = {
   Query,
-  Mutation,
+  //Mutation,
 }
 
+const typeDefs = Set(['type Query { _: Boolean }', ...metacardTypeDefs]).join(
+  '\n'
+)
+
 const executableSchema = makeExecutableSchema({
-  typeDefs: genSchema(),
+  typeDefs,
   resolvers,
 })
 
@@ -439,12 +446,11 @@ const defaultOptions = {
   ssrMode: false,
 }
 
-const btoa = arg => {
-  if (typeof window !== 'undefined') {
-    return window.btoa(arg)
-  }
-  return Buffer.from(arg).toString('base64')
-}
+const btoa = arg =>
+  typeof window !== 'undefined'
+    ? window.btoa(arg)
+    : Buffer.from(arg).toString('base64')
+
 export const context = {
   ...metacardsContext,
 }
@@ -474,5 +480,6 @@ const createClient = (options = defaultOptions) => {
 module.exports = {
   context,
   createClient,
+  typeDefs,
   resolvers,
 }

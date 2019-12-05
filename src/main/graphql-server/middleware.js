@@ -1,18 +1,18 @@
 const { genSchema } = require('../webapp/intrigue-api/gen-schema')
 const { ApolloServer } = require('apollo-server-express')
 const express = require('express')
-const typeDefs = genSchema()
 const renderer = require('./helpers/renderer')
 import createRpcClient from '../webapp/intrigue-api/rpc'
 const fetch = require('../webapp/intrigue-api/fetch')
-const { context, resolvers } = require('../webapp/intrigue-api/graphql')
-
-console.log(context)
+const {
+  context,
+  typeDefs,
+  resolvers,
+} = require('../webapp/intrigue-api/graphql')
 
 const app = express.Router()
 const server = new ApolloServer({
   typeDefs,
-  context,
   resolvers,
   context: ({ req }) => {
     const { authorization = '' } = req.headers
@@ -40,7 +40,7 @@ const server = new ApolloServer({
       catalog[method] = params => request(methods[method], params)
       return catalog
     }, {})
-    return { catalog, fetch: universalFetch }
+    return { catalog, fetch: universalFetch, ...context }
   },
 })
 

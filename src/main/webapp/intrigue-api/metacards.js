@@ -1,3 +1,99 @@
+import gql from 'graphql-tag'
+import { print } from 'graphql/language/printer'
+
+const typeDefs = attrs => gql`
+  scalar Json
+  # Binary content embedded as a base64 String
+  scalar Binary
+  # WKT embedded as a String
+  scalar Geometry
+  # XML embedded as a String
+  scalar XML
+  # ISO 8601 Data Time embedded as a String
+  scalar Date
+
+  # Common and well known metacard attributes intended for progrmatic usage
+  type MetacardAttributes {
+  ${attrs()}
+  }
+
+  input MetacardAttributesInput {
+  ${attrs(true)}
+  }
+
+  enum Direction {
+    # Smaller to Larger values
+    asc
+    # Smaller to Larger values
+    ascending
+    # Larger to Smaller values
+    desc
+    # Larger to Smaller values
+    descending
+  }
+
+  input QuerySortInput {
+    attribute: String
+    direction: Direction
+  }
+
+  type QuerySort {
+    attribute: String
+    direction: Direction
+  }
+
+  input QuerySettingsInput {
+    src: String
+    federation: String
+    phonetics: Boolean
+    sorts: [QuerySortInput]
+    spellcheck: Boolean
+
+    # Page size
+    count: Int
+
+    # Start of paging. First element is 1, not 0.
+    start: Int
+    type: String
+  }
+
+  type QueryResponseStatus {
+    count: Int
+    elapsed: Int
+    hits: Int
+    id: ID
+    successful: Boolean
+  }
+
+  type MetacardAction {
+    description: String
+    displayName: String
+    id: ID
+    title: String
+    url: String
+  }
+
+  type QueryResponseResult {
+    actions: [MetacardAction]
+    # All known metacard attributes with raw attributes names.
+    # This is intended for views that are interested in:
+    # 1. Using raw attribute names.
+    # 2. Attribute aliasing that require raw attribute names.
+    # 3. Getting all the possible attributes.
+    metacard: Json
+  }
+
+  type QueryResponse {
+    results: [QueryResponseResult]
+    attributes: [MetacardAttributes]
+    status: QueryResponseStatus
+  }
+
+  extend type Query {
+    metacards(filterTree: Json!, settings: QuerySettingsInput): QueryResponse
+  }
+`
+
 const { write } = require('./cql')
 
 const getCql = ({ filterTree, cql }) => {
@@ -115,33 +211,12 @@ export default attributes => {
       .join('\n')
   }
 
-  const typeDefs = `
-    scalar Json
-    # Binary content embedded as a base64 String
-    scalar Binary
-    # WKT embedded as a String
-    scalar Geometry
-    # XML embedded as a String
-    scalar XML
-    # ISO 8601 Data Time embedded as a String
-    scalar Date
-
-    # Common and well known metacard attributes intended for progrmatic usage
-    type MetacardAttributes {
-    ${attrs()}
-    }
-
-    input MetacardAttributesInput {
-    ${attrs(true)}
-    }
-  `
-
   return {
     resolver: metacards,
     context: {
       toGraphqlName,
       fromGraphqlName,
     },
-    typeDefs: [typeDefs],
+    typeDefs: [print(typeDefs(attrs))],
   }
 }
