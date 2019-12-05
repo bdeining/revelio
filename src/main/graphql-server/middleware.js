@@ -14,6 +14,7 @@ const btoa = arg => {
 const Authorization = 'Basic ' + btoa('admin:admin')
 
 const app = express.Router()
+const router = express.Router()
 const server = new ApolloServer({
   typeDefs,
   resolvers,
@@ -52,7 +53,7 @@ const server = new ApolloServer({
   },
 })
 
-app.use(renderer)
-server.applyMiddleware({ app })
+server.applyMiddleware({ app: router })
+router.use('*', renderer)
 
-export default app
+module.exports = router

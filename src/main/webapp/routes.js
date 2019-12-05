@@ -1,3 +1,4 @@
+require('babel-polyfill')
 import React, { Fragment } from 'react'
 
 import { getIn } from 'immutable'

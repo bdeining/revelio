@@ -2,12 +2,10 @@ const json = require('./attributes.json')
 
 const getTypeDefs = () => {
   if (typeof window === 'undefined') {
-    // prevent webpack from resolving fs/path which is only required for node
     const r = eval('require')
     const fs = r('fs')
     const path = r('path')
-    const schema = path.join(__dirname, 'schema.graphql')
-    return fs.readFileSync(schema)
+    return fs.readFileSync('./schema.graphql')
   } else {
     return require('raw-loader!./schema.graphql')
   }
