@@ -13,7 +13,6 @@ const btoa = arg => {
 
 const Authorization = 'Basic ' + btoa('admin:admin')
 
-const app = express.Router()
 const router = express.Router()
 const server = new ApolloServer({
   typeDefs,
