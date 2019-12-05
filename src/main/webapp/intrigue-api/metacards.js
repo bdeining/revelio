@@ -1,5 +1,3 @@
-import catalog from './catalog'
-
 const { write } = require('./cql')
 
 const getCql = ({ filterTree, cql }) => {
@@ -12,10 +10,6 @@ const getCql = ({ filterTree, cql }) => {
 const processQuery = ({ filterTree, cql, ...query }) => {
   const cqlString = getCql({ filterTree, cql })
   return { cql: cqlString, ...query }
-}
-
-const send = async query => {
-  return await catalog.query(processQuery(query))
 }
 
 const renameKeys = (fn, map) => {
